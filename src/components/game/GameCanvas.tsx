@@ -14,7 +14,7 @@ export const GameCanvas = ({ onStatsUpdate }: GameCanvasProps) => {
   const canvasRef = useRef<SVGSVGElement>(null);
   const { gameState, gameConstants, updateGimbo, updateGameState, startGame, pauseGame } = useGameState();
   
-  useGameLoop({
+  const keysPressed = useGameLoop({
     gameState,
     gameConstants,
     updateGimbo,
@@ -122,6 +122,9 @@ export const GameCanvas = ({ onStatsUpdate }: GameCanvasProps) => {
             </text>
             <text x="10" y="65" fill="hsl(var(--foreground))" fontSize="12">
               Neck: {Math.round(gameState.gimbo.neckLength)}px
+            </text>
+            <text x="10" y="80" fill="hsl(var(--foreground))" fontSize="12">
+              Keys: {Array.from(keysPressed || new Set()).join(', ')}
             </text>
           </g>
         )}

@@ -159,6 +159,7 @@ export const useGameLoop = ({
       }
       if ((keys.has('Space') || keys.has('ArrowUp') || keys.has('KeyW')) && gimbo.isGrounded) {
         shouldJump = true;
+        console.log('Jump attempted! Grounded:', gimbo.isGrounded);
       }
       if (keys.has('KeyS') || keys.has('ArrowDown')) {
         isStretching = true;
@@ -167,11 +168,13 @@ export const useGameLoop = ({
       // Apply physics
       let newVelocityY = gimbo.velocity.y + gameConstants.GRAVITY;
       let newPositionX = gimbo.position.x + newVelocityX;
-      let newPositionY = gimbo.position.y + newVelocityY;
+      let newPositionY = gimbo.velocity.y < 0 ? gimbo.position.y + newVelocityY : gimbo.position.y + newVelocityY;
       let newIsGrounded = false;
 
-      if (shouldJump) {
+      if (shouldJump && gimbo.isGrounded) {
         newVelocityY = gameConstants.JUMP_STRENGTH;
+        newIsGrounded = false;
+        console.log('Jump executed! New velocity Y:', newVelocityY);
       }
 
       // Check platform collisions
