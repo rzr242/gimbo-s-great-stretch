@@ -47,6 +47,71 @@ export const GameCanvas = ({ levelData, worldTheme = 'savanna', onStatsUpdate, o
     }
   }, [gameState.isPlaying, startGame]);
 
+  // Load level data when levelData prop changes
+  useEffect(() => {
+    if (levelData) {
+      // Convert level platforms to game platforms
+      const platforms = levelData.platforms.map((levelPlatform: any) => ({
+        x: levelPlatform.x,
+        y: levelPlatform.y,
+        width: levelPlatform.width,
+        height: levelPlatform.height,
+        type: levelPlatform.type === 'moving' || levelPlatform.type === 'breakable' || levelPlatform.type === 'bounce' 
+          ? 'solid' // For now, treat special platforms as solid
+          : levelPlatform.type
+      }));
+
+      // Convert level collectibles to game collectibles
+      const collectibles = levelData.collectibles.map((levelCollectible: any) => ({
+        id: levelCollectible.id,
+        x: levelCollectible.x,
+        y: levelCollectible.y,
+        type: levelCollectible.type,
+        collected: false,
+        power: levelCollectible.power
+      }));
+
+      // Set up level goal
+      const levelGoal = {
+        x: levelData.goal.x,
+        y: levelData.goal.y,
+        width: levelData.goal.width,
+        height: levelData.goal.height,
+        reached: false
+      };
+
+      // Reset Gimbo to starting position
+      const gimboReset = {
+        id: 'gimbo',
+        position: { x: levelData.startPosition.x, y: levelData.startPosition.y },
+        velocity: { x: 0, y: 0 },
+        width: 40,
+        height: 60,
+        isGrounded: true,
+        isJumping: false,
+        facingDirection: 'right' as const,
+        neckLength: 0,
+        maxNeckLength: 100,
+        isStretching: false
+      };
+
+      // Update game state with new level data
+      updateGameState({
+        platforms,
+        collectibles,
+        levelGoal,
+        gimbo: gimboReset,
+        gameStats: { leaves: 0, hearts: 3, stars: 0, score: 0 },
+        isPlaying: false,
+        isPaused: false,
+        levelComplete: false
+      });
+
+      // Start the game after loading
+      setTimeout(() => startGame(), 100);
+    }
+  }, [levelData, updateGameState, startGame]);
+
   // Check for level completion
   useEffect(() => {
     if (gameState.levelComplete && onLevelComplete) {
