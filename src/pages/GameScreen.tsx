@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Pause, Leaf, Heart, Star } from "lucide-react";
 import { useState } from "react";
+import { GameCanvas } from "@/components/game/GameCanvas";
 
 const GameScreen = () => {
   const navigate = useNavigate();
@@ -88,49 +89,10 @@ const GameScreen = () => {
       </div>
 
       {/* Game Area */}
-      <div className="pt-20 h-screen flex items-center justify-center">
-        <Card className="bg-card/95 backdrop-blur-sm border-0 p-12 text-center shadow-soft max-w-2xl mx-4">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-primary mb-4">
-              🚧 Spelet Utvecklas 🚧
-            </h1>
-            <p className="text-xl text-foreground/80 mb-6">
-              Gimbo övar fortfarande sina rörelser! Snart kommer du att kunna:
-            </p>
-          </div>
-
-          <div className="text-left space-y-4 mb-8">
-            <div className="flex items-center gap-3 text-lg">
-              <span className="text-2xl">🦒</span>
-              <span>Sträcka Gimbos hals för att nå höga plattformar</span>
-            </div>
-            <div className="flex items-center gap-3 text-lg">
-              <span className="text-2xl">🍃</span>
-              <span>Samla magiska löv med speciella krafter</span>
-            </div>
-            <div className="flex items-center gap-3 text-lg">
-              <span className="text-2xl">🐾</span>
-              <span>Träffa djurvänner som ger uppdrag</span>
-            </div>
-            <div className="flex items-center gap-3 text-lg">
-              <span className="text-2xl">🧩</span>
-              <span>Lösa kreativa miljöpussel</span>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <Button
-              onClick={handleBackToLevels}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 text-lg rounded-xl shadow-soft hover:shadow-glow transition-all duration-300"
-            >
-              Tillbaka till Världsval
-            </Button>
-            
-            <p className="text-sm text-muted-foreground">
-              Håll utkik efter uppdateringar med nya nivåer och funktioner!
-            </p>
-          </div>
-        </Card>
+      <div className="pt-20 h-screen">
+        <GameCanvas 
+          onStatsUpdate={(stats) => setGameStats(stats)} 
+        />
       </div>
 
       {/* Pause Overlay */}
