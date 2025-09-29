@@ -159,7 +159,6 @@ export const useGameLoop = ({
       }
       if ((keys.has('Space') || keys.has('ArrowUp') || keys.has('KeyW')) && gimbo.isGrounded) {
         shouldJump = true;
-        console.log('Jump attempted! Grounded:', gimbo.isGrounded);
       }
       if (keys.has('KeyS') || keys.has('ArrowDown')) {
         isStretching = true;
@@ -168,13 +167,14 @@ export const useGameLoop = ({
       // Apply physics
       let newVelocityY = gimbo.velocity.y + gameConstants.GRAVITY;
       let newPositionX = gimbo.position.x + newVelocityX;
-      let newPositionY = gimbo.velocity.y < 0 ? gimbo.position.y + newVelocityY : gimbo.position.y + newVelocityY;
+      let newPositionY = gimbo.position.y + newVelocityY;
       let newIsGrounded = false;
 
       if (shouldJump && gimbo.isGrounded) {
         newVelocityY = gameConstants.JUMP_STRENGTH;
         newIsGrounded = false;
-        console.log('Jump executed! New velocity Y:', newVelocityY);
+        // Move Gimbo slightly up to prevent immediate re-grounding
+        newPositionY = gimbo.position.y - 2;
       }
 
       // Check platform collisions
@@ -186,13 +186,13 @@ export const useGameLoop = ({
 
       platforms.forEach(platform => {
         if (checkCollision(gimboNextFrame, platform)) {
-          // Landing on platform from above
+          // Landing on platform from above (only if falling down)
           if (gimbo.velocity.y >= 0 && gimbo.position.y + gimbo.height <= platform.y + 15) {
             newPositionY = platform.y - gimbo.height;
             newVelocityY = 0;
             newIsGrounded = true;
           }
-          // Hitting platform from below
+          // Hitting platform from below (only if moving up)
           else if (gimbo.velocity.y < 0 && gimbo.position.y >= platform.y + platform.height - 15) {
             newPositionY = platform.y + platform.height;
             newVelocityY = 0;
@@ -219,6 +219,11 @@ export const useGameLoop = ({
         newPositionY = gameConstants.GROUND_Y - gimbo.height;
         newVelocityY = 0;
         newIsGrounded = true;
+      }
+
+      // Don't override grounded state if we just jumped
+      if (shouldJump && gimbo.isGrounded) {
+        newIsGrounded = false;
       }
 
       // Neck stretching logic
