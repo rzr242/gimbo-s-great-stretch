@@ -2,41 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Gimbo's Adventure - African Savanna Design System
+Inspired by warm sunsets, golden savannas, and playful giraffes
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Savanna sunset palette */
+    --background: 45 100% 96%;
+    --foreground: 20 15% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 45 80% 98%;
+    --card-foreground: 20 15% 15%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 45 80% 98%;
+    --popover-foreground: 20 15% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Gimbo's golden primary */
+    --primary: 35 90% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Warm secondary - sunset orange */
+    --secondary: 15 85% 65%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Savanna green accent */
+    --accent: 85 35% 55%;
+    --accent-foreground: 0 0% 100%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Soft muted tones */
+    --muted: 45 40% 90%;
+    --muted-foreground: 20 8% 45%;
+
+    /* Sky blue for clouds/water */
+    --sky: 200 85% 70%;
+    --sky-foreground: 0 0% 100%;
+
+    /* Desert coral */
+    --coral: 10 80% 70%;
+    --coral-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 45 25% 85%;
+    --input: 45 25% 85%;
+    --ring: 35 90% 55%;
 
-    --radius: 0.5rem;
+    /* Gimbo's playful radius */
+    --radius: 1rem;
+
+    /* Magical gradients */
+    --gradient-savanna: linear-gradient(135deg, hsl(45 90% 70%), hsl(35 85% 60%), hsl(15 80% 65%));
+    --gradient-jungle: linear-gradient(135deg, hsl(85 50% 45%), hsl(120 40% 35%), hsl(85 60% 55%));
+    --gradient-desert: linear-gradient(135deg, hsl(35 70% 70%), hsl(25 80% 65%), hsl(15 85% 70%));
+    --gradient-clouds: linear-gradient(135deg, hsl(200 80% 80%), hsl(220 70% 75%), hsl(240 60% 85%));
+    
+    /* Playful shadows */
+    --shadow-soft: 0 4px 20px hsl(35 40% 70% / 0.2);
+    --shadow-hover: 0 8px 30px hsl(35 50% 60% / 0.3);
+    --shadow-glow: 0 0 30px hsl(35 90% 55% / 0.4);
+
+    /* Smooth transitions */
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
 
