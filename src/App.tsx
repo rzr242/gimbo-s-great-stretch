@@ -20,6 +20,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/level-select" element={<LevelSelect />} />
           <Route path="/game/:worldId" element={<GameScreen />} />
+          <Route path="/game/:worldId/:levelId" element={<GameScreen />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -69,9 +69,31 @@ const worlds: World[] = [
 const LevelSelect = () => {
   const navigate = useNavigate();
 
-  const handleWorldSelect = (world: World) => {
-    if (world.unlocked) {
-      navigate(`/game/${world.id}`);
+  // Update world unlock status based on stars
+  useEffect(() => {
+    const totalStars = getTotalStars();
+    const updatedWorlds = worldsData.map(world => {
+      const progress = getWorldProgress(world.id);
+      const worldUnlocked = world.id === 'savanna' || totalStars >= (world.levels[0]?.requiredStars || 0);
+      
+      return {
+        ...world,
+        unlocked: worldUnlocked,
+        completed: progress.completedLevels === world.levels.length,
+        totalStars: progress.totalStars
+      };
+    });
+    setWorlds(updatedWorlds);
+  }, [getTotalStars, getWorldProgress]);
+
+  const handleWorldSelect = (worldId: string) => {
+    const world = worlds.find(w => w.id === worldId);
+    if (world?.unlocked) {
+      // Navigate to first level of the world
+      const firstLevel = world.levels[0];
+      if (firstLevel) {
+        navigate(`/game/${worldId}/${firstLevel.id}`);
+      }
     }
   };
 
