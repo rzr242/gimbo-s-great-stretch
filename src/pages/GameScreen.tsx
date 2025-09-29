@@ -90,6 +90,10 @@ const GameScreen = () => {
   const handleNextLevel = () => {
     const nextLevel = getNextLevel();
     if (nextLevel) {
+      // Close the completion modal first
+      setIsLevelComplete(false);
+      setLevelCompleteData(null);
+      // Then navigate to next level
       navigate(`/game/${currentWorld.id}/${nextLevel.id}`);
     } else {
       // No more levels in this world, go back to level select
@@ -98,11 +102,18 @@ const GameScreen = () => {
   };
 
   const handleReplayLevel = () => {
+    // Close the completion modal
     setIsLevelComplete(false);
     setLevelCompleteData(null);
     // Refresh the page to reload the level
     window.location.reload();
   };
+
+  // Reset completion modal when level changes
+  useEffect(() => {
+    setIsLevelComplete(false);
+    setLevelCompleteData(null);
+  }, [levelId]);
 
   if (!currentLevel || !currentWorld) {
     return (
