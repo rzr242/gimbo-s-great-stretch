@@ -40,16 +40,16 @@ export const GameCanvas = ({ levelData, worldTheme = 'savanna', onStatsUpdate, o
     }
   }, [gameState.gameStats, onStatsUpdate]);
 
-  // Start game when component mounts
-  useEffect(() => {
-    if (!gameState.isPlaying) {
-      startGame();
-    }
-  }, [gameState.isPlaying, startGame]);
+  // Start game when component mounts (only when no external level provided)
+  // Removed to prevent race conditions; start happens after level load.
+
+  // Level change guard to prevent immediate completion callback
+  const justLoadedRef = useRef(false);
 
   // Load level data when levelData prop changes
   useEffect(() => {
     if (levelData) {
+      justLoadedRef.current = true;
       // Convert level platforms to game platforms
       const platforms = levelData.platforms.map((levelPlatform: any) => ({
         x: levelPlatform.x,
@@ -107,14 +107,17 @@ export const GameCanvas = ({ levelData, worldTheme = 'savanna', onStatsUpdate, o
         levelComplete: false
       });
 
-      // Start the game after loading
-      setTimeout(() => startGame(), 100);
+      // Start the game after loading and clear guard shortly after
+      setTimeout(() => {
+        startGame();
+        setTimeout(() => { justLoadedRef.current = false; }, 200);
+      }, 50);
     }
   }, [levelData, updateGameState, startGame]);
 
   // Check for level completion
   useEffect(() => {
-    if (gameState.levelComplete && onLevelComplete) {
+    if (gameState.levelComplete && onLevelComplete && !justLoadedRef.current) {
       const completionTime = Date.now() / 1000; // Simple time calculation
       const totalCollectibles = gameState.collectibles.length;
       const collectiblesFound = gameState.collectibles.filter(c => c.collected).length;
