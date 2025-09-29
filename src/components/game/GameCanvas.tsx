@@ -40,6 +40,13 @@ export const GameCanvas = ({ levelData, worldTheme = 'savanna', onStatsUpdate, o
     }
   }, [gameState.gameStats, onStatsUpdate]);
 
+  // Start game when component mounts
+  useEffect(() => {
+    if (!gameState.isPlaying) {
+      startGame();
+    }
+  }, [gameState.isPlaying, startGame]);
+
   // Check for level completion
   useEffect(() => {
     if (gameState.levelComplete && onLevelComplete) {
