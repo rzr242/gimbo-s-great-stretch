@@ -1,73 +1,27 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Star, Lock } from "lucide-react";
-import worldSavanna from "@/assets/world-savanna.png";
-import worldJungle from "@/assets/world-jungle.png";
-import worldDesert from "@/assets/world-desert.png";
-import worldClouds from "@/assets/world-clouds.png";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Star, Lock, Play } from 'lucide-react';
+import { worldsData } from '@/data/levels';
+import { useLevelProgress } from '@/hooks/useLevelProgress';
+import worldSavanna from '@/assets/world-savanna.png';
+import worldJungle from '@/assets/world-jungle.png';
+import worldDesert from '@/assets/world-desert.png';
+import worldClouds from '@/assets/world-clouds.png';
 
-interface World {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  unlocked: boolean;
-  completed: boolean;
-  stars: number;
-  totalStars: number;
-  gradient: string;
-}
-
-const worlds: World[] = [
-  {
-    id: "savanna",
-    name: "Savannen",
-    description: "Gimbos hemområde med grundläggande pussel och vänliga djur",
-    image: worldSavanna,
-    unlocked: true,
-    completed: true,
-    stars: 3,
-    totalStars: 3,
-    gradient: "bg-gradient-savanna"
-  },
-  {
-    id: "jungle",
-    name: "Djungeln",
-    description: "Täta träd, giftiga växter och hemliga gångar väntar",
-    image: worldJungle,
-    unlocked: true,
-    completed: false,
-    stars: 1,
-    totalStars: 3,
-    gradient: "bg-gradient-jungle"
-  },
-  {
-    id: "desert",
-    name: "Ökenruinerna",
-    description: "Gamla girafftempel med mystiska gåtor och forntida magi",
-    image: worldDesert,
-    unlocked: false,
-    completed: false,
-    stars: 0,
-    totalStars: 3,
-    gradient: "bg-gradient-desert"
-  },
-  {
-    id: "clouds",
-    name: "Molnlandet",
-    description: "En drömlik värld där Gimbo grappler mellan flytande öar",
-    image: worldClouds,
-    unlocked: false,
-    completed: false,
-    stars: 0,
-    totalStars: 3,
-    gradient: "bg-gradient-clouds"
-  }
-];
+const worldImages = {
+  savanna: worldSavanna,
+  jungle: worldJungle,
+  desert: worldDesert,
+  clouds: worldClouds
+};
 
 const LevelSelect = () => {
   const navigate = useNavigate();
+  const [worlds, setWorlds] = useState(worldsData);
+  const { getTotalStars, getWorldProgress, isLevelUnlocked } = useLevelProgress();
 
   // Update world unlock status based on stars
   useEffect(() => {
@@ -130,9 +84,12 @@ const LevelSelect = () => {
           </h1>
         </div>
         
-        <p className="text-lg text-foreground/80 max-w-2xl">
-          Utforska Gimbos magiska världar! Varje värld har unika utmaningar och hemligheter att upptäcka.
+        <p className="text-lg text-foreground/80 max-w-2xl mb-4">
+          Välj en värld att utforska med Gimbo. Varje värld har unika utmaningar!
         </p>
+        <div className="text-lg font-semibold text-secondary">
+          Totala Stjärnor: {getTotalStars()}
+        </div>
       </div>
 
       {/* World Grid */}
@@ -144,10 +101,10 @@ const LevelSelect = () => {
               className={`relative overflow-hidden border-0 shadow-soft hover:shadow-hover transition-all duration-300 cursor-pointer group ${
                 world.unlocked ? "hover:scale-105 hover:-translate-y-2" : "opacity-70"
               }`}
-              onClick={() => handleWorldSelect(world)}
+              onClick={() => world.unlocked && handleWorldSelect(world.id)}
             >
               {/* Background gradient */}
-              <div className={`absolute inset-0 ${world.gradient} opacity-20`}></div>
+              <div className={`absolute inset-0 bg-gradient-${world.theme} opacity-20`}></div>
               
               {/* Lock overlay for locked worlds */}
               {!world.unlocked && (
@@ -164,7 +121,7 @@ const LevelSelect = () => {
                 {/* World Image */}
                 <div className="mb-6">
                   <img
-                    src={world.image}
+                    src={worldImages[world.theme]}
                     alt={world.name}
                     className="w-32 h-32 mx-auto object-contain drop-shadow-xl group-hover:scale-110 transition-transform duration-300"
                   />
@@ -181,23 +138,34 @@ const LevelSelect = () => {
                 </div>
 
                 {/* Progress */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="text-sm text-muted-foreground">
-                    Framsteg: {world.stars}/{world.totalStars}
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                  <span>Framsteg</span>
+                  <div className="flex items-center gap-1">
+                    {renderStars(world.totalStars, world.levels.length * 3)}
+                    <span className="ml-1">{world.totalStars}/{world.levels.length * 3}</span>
                   </div>
-                  {renderStars(world.stars, world.totalStars)}
                 </div>
 
                 {/* Action Button */}
-                <Button
+                <Button 
+                  className={`w-full ${world.unlocked 
+                    ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
+                    : 'bg-muted text-muted-foreground cursor-not-allowed'
+                  } text-lg py-3 rounded-xl transition-all duration-300`}
+                  onClick={() => world.unlocked && handleWorldSelect(world.id)}
                   disabled={!world.unlocked}
-                  className={`w-full py-6 text-lg rounded-xl transition-all duration-300 ${
-                    world.unlocked
-                      ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-soft hover:shadow-glow"
-                      : "bg-muted text-muted-foreground cursor-not-allowed"
-                  }`}
                 >
-                  {world.unlocked ? "Spela" : "Låst"}
+                  {world.unlocked ? (
+                    <>
+                      <Play className="w-5 h-5 mr-2" />
+                      Spela ({world.levels.length} nivåer)
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-5 h-5 mr-2" />
+                      Låst (behöver {world.levels[0]?.requiredStars || 0} stjärnor)
+                    </>
+                  )}
                 </Button>
               </div>
 
