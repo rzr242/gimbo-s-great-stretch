@@ -33,9 +33,28 @@ export interface Platform {
   type: 'solid' | 'moving' | 'breakable';
 }
 
+export interface Collectible {
+  id: string;
+  x: number;
+  y: number;
+  type: 'leaf' | 'star' | 'heart';
+  collected: boolean;
+  power?: 'speed' | 'jump' | 'wisdom';
+}
+
+export interface LevelGoal {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  reached: boolean;
+}
+
 export interface GameState {
   gimbo: Gimbo;
   platforms: Platform[];
+  collectibles: Collectible[];
+  levelGoal: LevelGoal;
   camera: {
     x: number;
     y: number;
@@ -48,6 +67,7 @@ export interface GameState {
   };
   isPlaying: boolean;
   isPaused: boolean;
+  levelComplete: boolean;
 }
 
 export interface GameConstants {

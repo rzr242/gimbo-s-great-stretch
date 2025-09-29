@@ -1,17 +1,19 @@
-import { useEffect, useRef } from 'react';
-import { GameState, GameConstants } from '@/types/game';
+import { useEffect, useRef, useCallback } from 'react';
+import { GameState, GameConstants, Collectible } from '@/types/game';
 
 interface UseGameLoopProps {
   gameState: GameState;
   gameConstants: GameConstants;
   updateGimbo: (updates: any) => void;
-  onCollectItem?: (itemType: string) => void;
+  updateGameState: (updates: Partial<GameState>) => void;
+  onCollectItem?: (item: Collectible) => void;
 }
 
 export const useGameLoop = ({ 
   gameState, 
   gameConstants, 
   updateGimbo,
+  updateGameState,
   onCollectItem 
 }: UseGameLoopProps) => {
   const animationFrameRef = useRef<number>();
@@ -20,10 +22,12 @@ export const useGameLoop = ({
   // Handle keyboard input
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      event.preventDefault();
       keysPressed.current.add(event.code);
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
+      event.preventDefault();
       keysPressed.current.delete(event.code);
     };
 
@@ -37,18 +41,101 @@ export const useGameLoop = ({
   }, []);
 
   // Collision detection
-  const checkCollision = (entityA: any, entityB: any) => {
+  const checkCollision = useCallback((entityA: any, entityB: any) => {
     return (
       entityA.position.x < entityB.x + entityB.width &&
       entityA.position.x + entityA.width > entityB.x &&
       entityA.position.y < entityB.y + entityB.height &&
       entityA.position.y + entityA.height > entityB.y
     );
-  };
+  }, []);
+
+  // Check collectible collisions
+  const checkCollectibles = useCallback(() => {
+    const gimboRect = {
+      x: gameState.gimbo.position.x,
+      y: gameState.gimbo.position.y,
+      width: gameState.gimbo.width,
+      height: gameState.gimbo.height
+    };
+
+    gameState.collectibles.forEach(collectible => {
+      if (!collectible.collected) {
+        const collectibleRect = {
+          x: collectible.x,
+          y: collectible.y,
+          width: 20,
+          height: 20
+        };
+
+        if (
+          gimboRect.x < collectibleRect.x + collectibleRect.width &&
+          gimboRect.x + gimboRect.width > collectibleRect.x &&
+          gimboRect.y < collectibleRect.y + collectibleRect.height &&
+          gimboRect.y + gimboRect.height > collectibleRect.y
+        ) {
+          // Mark as collected
+          const updatedCollectibles = gameState.collectibles.map(c => 
+            c.id === collectible.id ? { ...c, collected: true } : c
+          );
+          
+          // Update stats
+          const newStats = { ...gameState.gameStats };
+          switch (collectible.type) {
+            case 'leaf':
+              newStats.leaves += 1;
+              newStats.score += 10;
+              break;
+            case 'star':
+              newStats.stars += 1;
+              newStats.score += 50;
+              break;
+            case 'heart':
+              newStats.hearts = Math.min(newStats.hearts + 1, 5);
+              newStats.score += 25;
+              break;
+          }
+
+          updateGameState({
+            collectibles: updatedCollectibles,
+            gameStats: newStats
+          });
+
+          if (onCollectItem) {
+            onCollectItem(collectible);
+          }
+        }
+      }
+    });
+  }, [gameState.gimbo, gameState.collectibles, gameState.gameStats, updateGameState, onCollectItem]);
+
+  // Check level goal
+  const checkLevelGoal = useCallback(() => {
+    if (gameState.levelGoal.reached) return;
+
+    const gimboRect = {
+      x: gameState.gimbo.position.x,
+      y: gameState.gimbo.position.y,
+      width: gameState.gimbo.width,
+      height: gameState.gimbo.height
+    };
+
+    if (
+      gimboRect.x + gimboRect.width > gameState.levelGoal.x &&
+      gimboRect.x < gameState.levelGoal.x + gameState.levelGoal.width &&
+      gimboRect.y + gimboRect.height > gameState.levelGoal.y &&
+      gimboRect.y < gameState.levelGoal.y + gameState.levelGoal.height
+    ) {
+      updateGameState({
+        levelGoal: { ...gameState.levelGoal, reached: true },
+        levelComplete: true
+      });
+    }
+  }, [gameState.gimbo, gameState.levelGoal, updateGameState]);
 
   // Game loop
   useEffect(() => {
-    if (!gameState.isPlaying || gameState.isPaused) {
+    if (!gameState.isPlaying || gameState.isPaused || gameState.levelComplete) {
       return;
     }
 
@@ -97,18 +184,18 @@ export const useGameLoop = ({
       platforms.forEach(platform => {
         if (checkCollision(gimboNextFrame, platform)) {
           // Landing on platform from above
-          if (gimbo.velocity.y > 0 && gimbo.position.y + gimbo.height <= platform.y + 10) {
+          if (gimbo.velocity.y >= 0 && gimbo.position.y + gimbo.height <= platform.y + 15) {
             newPositionY = platform.y - gimbo.height;
             newVelocityY = 0;
             newIsGrounded = true;
           }
           // Hitting platform from below
-          else if (gimbo.velocity.y < 0 && gimbo.position.y >= platform.y + platform.height - 10) {
+          else if (gimbo.velocity.y < 0 && gimbo.position.y >= platform.y + platform.height - 15) {
             newPositionY = platform.y + platform.height;
             newVelocityY = 0;
           }
           // Hitting platform from the side
-          else if (newVelocityX !== 0) {
+          else if (Math.abs(newVelocityX) > 0) {
             if (newVelocityX > 0) {
               newPositionX = platform.x - gimbo.width;
             } else {
@@ -120,12 +207,12 @@ export const useGameLoop = ({
 
       // Boundary checks
       if (newPositionX < 0) newPositionX = 0;
-      if (newPositionX + gimbo.width > gameConstants.CANVAS_WIDTH) {
-        newPositionX = gameConstants.CANVAS_WIDTH - gimbo.width;
+      if (newPositionX + gimbo.width > gameConstants.CANVAS_WIDTH * 2) {
+        newPositionX = gameConstants.CANVAS_WIDTH * 2 - gimbo.width;
       }
 
       // Ground check (fallback)
-      if (newPositionY + gimbo.height > gameConstants.GROUND_Y) {
+      if (newPositionY + gimbo.height >= gameConstants.GROUND_Y) {
         newPositionY = gameConstants.GROUND_Y - gimbo.height;
         newVelocityY = 0;
         newIsGrounded = true;
@@ -150,6 +237,10 @@ export const useGameLoop = ({
         isStretching
       });
 
+      // Check interactions
+      checkCollectibles();
+      checkLevelGoal();
+
       animationFrameRef.current = requestAnimationFrame(gameLoop);
     };
 
@@ -160,7 +251,7 @@ export const useGameLoop = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [gameState.isPlaying, gameState.isPaused, gameState, gameConstants, updateGimbo]);
+  }, [gameState, gameConstants, updateGimbo, checkCollision, checkCollectibles, checkLevelGoal]);
 
   return keysPressed.current;
 };

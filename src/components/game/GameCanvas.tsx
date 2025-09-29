@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { useGameState } from '@/hooks/useGameState';
 import { useGameLoop } from '@/hooks/useGameLoop';
 import { Gimbo } from './Gimbo';
+import { Collectibles } from './Collectibles';
+import { LevelGoal } from './LevelGoal';
 import { Platform } from '@/types/game';
 
 interface GameCanvasProps {
@@ -10,23 +12,30 @@ interface GameCanvasProps {
 
 export const GameCanvas = ({ onStatsUpdate }: GameCanvasProps) => {
   const canvasRef = useRef<SVGSVGElement>(null);
-  const { gameState, gameConstants, updateGimbo, startGame, pauseGame } = useGameState();
+  const { gameState, gameConstants, updateGimbo, updateGameState, startGame, pauseGame } = useGameState();
   
   useGameLoop({
     gameState,
     gameConstants,
     updateGimbo,
-    onCollectItem: (itemType: string) => {
-      // Handle item collection logic here
-      console.log('Collected:', itemType);
+    updateGameState,
+    onCollectItem: (collectible) => {
+      console.log(`Collected ${collectible.type}:`, collectible.power || 'no power');
     }
   });
 
   // Update camera to follow Gimbo
   const cameraX = Math.max(0, Math.min(
     gameState.gimbo.position.x - gameConstants.CANVAS_WIDTH / 2,
-    800 // Max world width for now
+    1600 - gameConstants.CANVAS_WIDTH // Extended world width
   ));
+
+  // Update stats when they change
+  useEffect(() => {
+    if (onStatsUpdate) {
+      onStatsUpdate(gameState.gameStats);
+    }
+  }, [gameState.gameStats, onStatsUpdate]);
 
   // Start game automatically when component mounts
   useEffect(() => {
@@ -78,6 +87,10 @@ export const GameCanvas = ({ onStatsUpdate }: GameCanvasProps) => {
             <circle cx="25" cy="25" r="15" fill="rgba(255,255,255,0.3)" />
             <circle cx="75" cy="25" r="20" fill="rgba(255,255,255,0.2)" />
           </pattern>
+          <linearGradient id="goalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0.8" />
+          </linearGradient>
         </defs>
         
         {/* Sky with moving clouds */}
@@ -85,6 +98,12 @@ export const GameCanvas = ({ onStatsUpdate }: GameCanvasProps) => {
         
         {/* Platforms */}
         {gameState.platforms.map(renderPlatform)}
+        
+        {/* Collectibles */}
+        <Collectibles collectibles={gameState.collectibles} cameraX={cameraX} />
+        
+        {/* Level Goal */}
+        <LevelGoal goal={gameState.levelGoal} cameraX={cameraX} />
         
         {/* Gimbo */}
         <Gimbo gimbo={gameState.gimbo} cameraX={cameraX} />
@@ -111,7 +130,7 @@ export const GameCanvas = ({ onStatsUpdate }: GameCanvasProps) => {
       {/* Game controls overlay */}
       <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
         <div className="bg-card/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm text-muted-foreground">
-          Use WASD or Arrow keys to move, S/Down to stretch neck
+          Use WASD or Arrow keys to move • S/Down to stretch neck • Collect items and reach the flag!
         </div>
         <button
           onClick={pauseGame}
@@ -120,6 +139,37 @@ export const GameCanvas = ({ onStatsUpdate }: GameCanvasProps) => {
           {gameState.isPaused ? '▶️' : '⏸️'}
         </button>
       </div>
+
+      {/* Level Complete Modal */}
+      {gameState.levelComplete && (
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-50">
+          <div className="bg-card/95 backdrop-blur-sm border-0 rounded-xl p-8 text-center shadow-hover max-w-md mx-4 border-2 border-primary/20">
+            <h2 className="text-3xl font-bold text-primary mb-4">🎉 Nivå Klar! 🎉</h2>
+            <div className="space-y-2 mb-6">
+              <p className="text-lg">Bra jobbat, Gimbo!</p>
+              <p className="text-sm text-muted-foreground">
+                Poäng: {gameState.gameStats.score} • 
+                Löv: {gameState.gameStats.leaves} • 
+                Stjärnor: {gameState.gameStats.stars}
+              </p>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => window.location.href = '/level-select'}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-lg rounded-xl transition-colors"
+              >
+                Nästa Nivå
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground py-2 rounded-xl transition-colors"
+              >
+                Spela Om
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
