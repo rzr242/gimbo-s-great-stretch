@@ -7,10 +7,13 @@ import { LevelGoal } from './LevelGoal';
 import { Platform } from '@/types/game';
 
 interface GameCanvasProps {
+  levelData?: any;
+  worldTheme?: 'savanna' | 'jungle' | 'desert' | 'clouds';
   onStatsUpdate?: (stats: any) => void;
+  onLevelComplete?: (completed: boolean, time: number, collectiblesFound: number, totalCollectibles: number) => void;
 }
 
-export const GameCanvas = ({ onStatsUpdate }: GameCanvasProps) => {
+export const GameCanvas = ({ levelData, worldTheme = 'savanna', onStatsUpdate, onLevelComplete }: GameCanvasProps) => {
   const canvasRef = useRef<SVGSVGElement>(null);
   const { gameState, gameConstants, updateGimbo, updateGameState, startGame, pauseGame } = useGameState();
   
@@ -37,12 +40,27 @@ export const GameCanvas = ({ onStatsUpdate }: GameCanvasProps) => {
     }
   }, [gameState.gameStats, onStatsUpdate]);
 
-  // Start game automatically when component mounts
+  // Check for level completion
   useEffect(() => {
-    if (!gameState.isPlaying) {
-      startGame();
+    if (gameState.levelComplete && onLevelComplete) {
+      const completionTime = Date.now() / 1000; // Simple time calculation
+      const totalCollectibles = gameState.collectibles.length;
+      const collectiblesFound = gameState.collectibles.filter(c => c.collected).length;
+      
+      onLevelComplete(true, completionTime, collectiblesFound, totalCollectibles);
     }
-  }, [gameState.isPlaying, startGame]);
+  }, [gameState.levelComplete, onLevelComplete, gameState.collectibles]);
+
+  // Get world-specific background gradient
+  const getWorldBackground = () => {
+    const gradients = {
+      savanna: 'bg-gradient-savanna',
+      jungle: 'bg-gradient-jungle', 
+      desert: 'bg-gradient-desert',
+      clouds: 'bg-gradient-clouds'
+    };
+    return gradients[worldTheme] || gradients.savanna;
+  };
 
   const renderPlatform = (platform: Platform, index: number) => {
     const screenX = platform.x - cameraX;
@@ -73,7 +91,7 @@ export const GameCanvas = ({ onStatsUpdate }: GameCanvasProps) => {
   };
 
   return (
-    <div className="relative w-full h-full bg-gradient-savanna overflow-hidden rounded-lg border-2 border-primary/20">
+    <div className={`relative w-full h-full ${getWorldBackground()} overflow-hidden rounded-lg border-2 border-primary/20`}>
       <svg
         ref={canvasRef}
         width={gameConstants.CANVAS_WIDTH}
@@ -142,37 +160,6 @@ export const GameCanvas = ({ onStatsUpdate }: GameCanvasProps) => {
           {gameState.isPaused ? '▶️' : '⏸️'}
         </button>
       </div>
-
-      {/* Level Complete Modal */}
-      {gameState.levelComplete && (
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-50">
-          <div className="bg-card/95 backdrop-blur-sm border-0 rounded-xl p-8 text-center shadow-hover max-w-md mx-4 border-2 border-primary/20">
-            <h2 className="text-3xl font-bold text-primary mb-4">🎉 Nivå Klar! 🎉</h2>
-            <div className="space-y-2 mb-6">
-              <p className="text-lg">Bra jobbat, Gimbo!</p>
-              <p className="text-sm text-muted-foreground">
-                Poäng: {gameState.gameStats.score} • 
-                Löv: {gameState.gameStats.leaves} • 
-                Stjärnor: {gameState.gameStats.stars}
-              </p>
-            </div>
-            <div className="space-y-3">
-              <button
-                onClick={() => window.location.href = '/level-select'}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-lg rounded-xl transition-colors"
-              >
-                Nästa Nivå
-              </button>
-              <button
-                onClick={() => window.location.reload()}
-                className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground py-2 rounded-xl transition-colors"
-              >
-                Spela Om
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
